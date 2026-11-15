@@ -21,7 +21,7 @@ public class Knjiga
 
     public List<Autor> Autori { get; set; } = new List<Autor>();
 
-    public Izdavac Izdavac { get; set; }
+    public Izdavac? Izdavac { get; set; }
 
     public List<Posetilac> Kupci { get; set; } = new List<Posetilac>();
 
