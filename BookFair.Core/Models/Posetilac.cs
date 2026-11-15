@@ -15,4 +15,6 @@ public class Posetilac
     public string Email { get; set; } = string.Empty;
 
     public int TrenutnaGodinaClanstva { get; set; }
+    
+    public StatusPosetioca Status { get; set; } = StatusPosetioca.Redovan;
 }
