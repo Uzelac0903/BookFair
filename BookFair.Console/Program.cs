@@ -147,7 +147,7 @@ void IzmeniPosetioca()
 {
     Console.WriteLine("\n--- IZMENA POSETIOCA ---");
 
-    Console.Write("Broj clanske karte: ");
+    Console.Write("Broj clanske karte posetioca: ");
     string brojKarte = Console.ReadLine() ?? "";
 
     Posetilac? postojeci = service.GetAll()
@@ -159,14 +159,115 @@ void IzmeniPosetioca()
         return;
     }
 
-    Console.Write("Novo ime: ");
-    string novoIme = Console.ReadLine() ?? "";
+    Console.WriteLine(
+        "Unesite nove podatke (Enter zadrzava staru vrednost).");
 
-    Console.Write("Novo prezime: ");
-    string novoPrezime = Console.ReadLine() ?? "";
+    Console.Write($"Ime ({postojeci.Ime}): ");
+    string? ime = Console.ReadLine();
 
-    postojeci.Ime = novoIme;
-    postojeci.Prezime = novoPrezime;
+    if (!string.IsNullOrWhiteSpace(ime))
+        postojeci.Ime = ime;
+
+    Console.Write($"Prezime ({postojeci.Prezime}): ");
+    string? prezime = Console.ReadLine();
+
+    if (!string.IsNullOrWhiteSpace(prezime))
+        postojeci.Prezime = prezime;
+
+    Console.Write(
+        $"Datum rodjenja ({postojeci.DatumRodjenja:dd.MM.yyyy}): ");
+    string? datumUnos = Console.ReadLine();
+
+    if (!string.IsNullOrWhiteSpace(datumUnos))
+    {
+        if (!DateTime.TryParseExact(
+                datumUnos,
+                "dd.MM.yyyy",
+                System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None,
+                out DateTime datum))
+        {
+            Console.WriteLine("Neispravan datum.");
+            return;
+        }
+
+        postojeci.DatumRodjenja = datum;
+    }
+
+    postojeci.Adresa ??= new Adresa();
+
+    Console.Write($"Ulica ({postojeci.Adresa.Ulica}): ");
+    string? ulica = Console.ReadLine();
+
+    if (!string.IsNullOrWhiteSpace(ulica))
+        postojeci.Adresa.Ulica = ulica;
+
+    Console.Write($"Broj ({postojeci.Adresa.Broj}): ");
+    string? broj = Console.ReadLine();
+
+    if (!string.IsNullOrWhiteSpace(broj))
+        postojeci.Adresa.Broj = broj;
+
+    Console.Write($"Grad ({postojeci.Adresa.Grad}): ");
+    string? grad = Console.ReadLine();
+
+    if (!string.IsNullOrWhiteSpace(grad))
+        postojeci.Adresa.Grad = grad;
+
+    Console.Write($"Drzava ({postojeci.Adresa.Drzava}): ");
+    string? drzava = Console.ReadLine();
+
+    if (!string.IsNullOrWhiteSpace(drzava))
+        postojeci.Adresa.Drzava = drzava;
+
+    Console.Write($"Telefon ({postojeci.KontaktTelefon}): ");
+    string? telefon = Console.ReadLine();
+
+    if (!string.IsNullOrWhiteSpace(telefon))
+        postojeci.KontaktTelefon = telefon;
+
+    Console.Write($"Email ({postojeci.Email}): ");
+    string? email = Console.ReadLine();
+
+    if (!string.IsNullOrWhiteSpace(email))
+        postojeci.Email = email;
+
+    Console.Write(
+        $"Godina clanstva ({postojeci.TrenutnaGodinaClanstva}): ");
+    string? godinaUnos = Console.ReadLine();
+
+    if (!string.IsNullOrWhiteSpace(godinaUnos))
+    {
+        if (!int.TryParse(godinaUnos, out int godina))
+        {
+            Console.WriteLine("Neispravna godina.");
+            return;
+        }
+
+        postojeci.TrenutnaGodinaClanstva = godina;
+    }
+
+    Console.Write(
+        $"Status ({postojeci.Status}) [R/V]: ");
+    string? statusUnos = Console.ReadLine();
+
+    if (!string.IsNullOrWhiteSpace(statusUnos))
+    {
+        switch (statusUnos.Trim().ToUpperInvariant())
+        {
+            case "R":
+                postojeci.Status = StatusPosetioca.Redovan;
+                break;
+
+            case "V":
+                postojeci.Status = StatusPosetioca.VIP;
+                break;
+
+            default:
+                Console.WriteLine("Status mora biti R ili V.");
+                return;
+        }
+    }
 
     bool uspesno = service.Update(postojeci);
 
@@ -174,6 +275,7 @@ void IzmeniPosetioca()
         ? "Posetilac je uspesno izmenjen."
         : "Izmena nije uspela.");
 }
+
 
 // 8.3 - Brisanje
 void ObrisiPosetioca()
