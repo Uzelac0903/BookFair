@@ -12,6 +12,10 @@ PosetilacService service = new(dao);
 KupovinaDAO kupovinaDAO = new(dataDirectory);
 KupovinaService kupovinaService = new(kupovinaDAO);
 
+IzdavacDAO izdavacDAO = new(dataDirectory);
+IzdavacService izdavacService = new(izdavacDAO);
+
+
 
 while (true)
 {
@@ -20,11 +24,18 @@ while (true)
     Console.WriteLine("2. Izmeni posetioca");
     Console.WriteLine("3. Obrisi posetioca");
     Console.WriteLine("4. Prikazi posetioce");
+    
     Console.WriteLine("\n--- KUPOVINE ---");
     Console.WriteLine("5. Dodaj kupovinu");
     Console.WriteLine("6. Izmeni kupovinu");
     Console.WriteLine("7. Obrisi kupovinu");
     Console.WriteLine("8. Prikazi kupovine");
+    
+    Console.WriteLine("\n--- IZDAVACI ---");
+    Console.WriteLine("9. Dodaj izdavaca");
+    Console.WriteLine("10. Izmeni izdavaca");
+    Console.WriteLine("11. Obrisi izdavaca");
+    Console.WriteLine("12. Prikazi izdavace");
 
     
     Console.WriteLine("0. Izlaz");
@@ -49,10 +60,6 @@ while (true)
         case "4":
             PrikaziPosetioce();
             break;
-
-        case "0":
-            return;
-        
         
         case "5":
             DodajKupovinu();
@@ -69,6 +76,25 @@ while (true)
         case "8":
             PrikaziKupovine();
             break;
+        
+        case "9":
+            DodajIzdavaca();
+            break;
+
+        case "10":
+            IzmeniIzdavaca();
+            break;
+
+        case "11":
+            ObrisiIzdavaca();
+            break;
+
+        case "12":
+            PrikaziIzdavace();
+            break;
+        
+        case "0":
+            return;
         
         default:
             Console.WriteLine("Nepostojeca opcija.");
@@ -564,6 +590,111 @@ void ObrisiKupovinu()
         ? "Kupovina je uspesno obrisana."
         : "Brisanje nije uspelo.");
 }
+
+
+void DodajIzdavaca()
+{
+    Console.WriteLine("\n--- DODAVANJE IZDAVACA ---");
+
+    Console.Write("Sifra izdavaca: ");
+    string sifra = Console.ReadLine() ?? "";
+
+    Console.Write("Naziv izdavaca: ");
+    string naziv = Console.ReadLine() ?? "";
+
+    Izdavac novi = new()
+    {
+        Sifra = sifra,
+        Naziv = naziv
+    };
+
+    bool uspesno = izdavacService.Add(novi);
+
+    Console.WriteLine(uspesno
+        ? "Izdavac je uspesno dodat."
+        : "Dodavanje izdavaca nije uspelo.");
+}
+
+
+void PrikaziIzdavace()
+{
+    List<Izdavac> izdavaci = izdavacService.GetAll();
+
+    if (izdavaci.Count == 0)
+    {
+        Console.WriteLine("Nema izdavaca.");
+        return;
+    }
+
+    Console.WriteLine("\n--- LISTA IZDAVACA ---");
+
+    foreach (Izdavac i in izdavaci)
+    {
+        Console.WriteLine("-------------------------");
+        Console.WriteLine($"Sifra: {i.Sifra}");
+        Console.WriteLine($"Naziv: {i.Naziv}");
+        Console.WriteLine(
+            $"Sef (broj licne karte): {i.SefBrojLicneKarte ?? "Nije postavljen"}");
+        Console.WriteLine($"Broj autora: {i.Autori.Count}");
+        Console.WriteLine($"Broj knjiga: {i.Knjige.Count}");
+    }
+}
+
+
+void IzmeniIzdavaca()
+{
+    Console.WriteLine("\n--- IZMENA IZDAVACA ---");
+
+    Console.Write("Sifra izdavaca: ");
+    string sifra = Console.ReadLine() ?? "";
+
+    Izdavac? postojeci = izdavacService.GetAll()
+        .FirstOrDefault(i => i.Sifra == sifra);
+
+    if (postojeci == null)
+    {
+        Console.WriteLine("Izdavac nije pronadjen.");
+        return;
+    }
+
+    Console.Write($"Novi naziv ({postojeci.Naziv}): ");
+    string? naziv = Console.ReadLine();
+
+    if (!string.IsNullOrWhiteSpace(naziv))
+        postojeci.Naziv = naziv;
+
+    bool uspesno = izdavacService.Update(postojeci);
+
+    Console.WriteLine(uspesno
+        ? "Izdavac je uspesno izmenjen."
+        : "Izmena nije uspela.");
+}
+
+
+void ObrisiIzdavaca()
+{
+    Console.WriteLine("\n--- BRISANJE IZDAVACA ---");
+
+    Console.Write("Sifra izdavaca: ");
+    string sifra = Console.ReadLine() ?? "";
+
+    Console.Write("Potvrdi brisanje (D/N): ");
+    string potvrda = (Console.ReadLine() ?? "")
+        .Trim().ToUpperInvariant();
+
+    if (potvrda != "D")
+    {
+        Console.WriteLine("Brisanje je otkazano.");
+        return;
+    }
+
+    bool uspesno = izdavacService.Delete(sifra);
+
+    Console.WriteLine(uspesno
+        ? "Izdavac je uspesno obrisan."
+        : "Izdavac nije pronadjen.");
+}
+
 
 
 
