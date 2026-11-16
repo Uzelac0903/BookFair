@@ -9,6 +9,10 @@ string dataDirectory = Path.Combine(
 PosetilacDAO dao = new(dataDirectory);
 PosetilacService service = new(dao);
 
+KupovinaDAO kupovinaDAO = new(dataDirectory);
+KupovinaService kupovinaService = new(kupovinaDAO);
+
+
 while (true)
 {
     Console.WriteLine("\n========== BOOKFAIR ==========");
@@ -16,6 +20,13 @@ while (true)
     Console.WriteLine("2. Izmeni posetioca");
     Console.WriteLine("3. Obrisi posetioca");
     Console.WriteLine("4. Prikazi posetioce");
+    Console.WriteLine("\n--- KUPOVINE ---");
+    Console.WriteLine("5. Dodaj kupovinu");
+    Console.WriteLine("6. Izmeni kupovinu");
+    Console.WriteLine("7. Obrisi kupovinu");
+    Console.WriteLine("8. Prikazi kupovine");
+
+    
     Console.WriteLine("0. Izlaz");
 
     Console.Write("Izaberite opciju: ");
@@ -41,7 +52,24 @@ while (true)
 
         case "0":
             return;
+        
+        
+        case "5":
+            DodajKupovinu();
+            break;
 
+        case "6":
+            IzmeniKupovinu();
+            break;
+
+        case "7":
+            ObrisiKupovinu();
+            break;
+
+        case "8":
+            PrikaziKupovine();
+            break;
+        
         default:
             Console.WriteLine("Nepostojeca opcija.");
             break;
@@ -324,4 +352,218 @@ void PrikaziPosetioce()
         Console.WriteLine($"Broj knjiga na listi zelja: {p.ListaZelja?.Count ?? 0}");
     }
 }
+
+void DodajKupovinu()
+{
+    Console.WriteLine("\n--- DODAVANJE KUPOVINE ---");
+
+    Console.Write("Broj clanske karte: ");
+    string brojKarte = Console.ReadLine() ?? "";
+
+    Console.Write("ISBN knjige: ");
+    string isbn = Console.ReadLine() ?? "";
+
+    Console.Write("Datum kupovine (dd.MM.yyyy): ");
+    if (!DateTime.TryParseExact(
+            Console.ReadLine(),
+            "dd.MM.yyyy",
+            System.Globalization.CultureInfo.InvariantCulture,
+            System.Globalization.DateTimeStyles.None,
+            out DateTime datum))
+    {
+        Console.WriteLine("Neispravan datum.");
+        return;
+    }
+
+    Console.Write("Ocena (1-5): ");
+    if (!int.TryParse(Console.ReadLine(), out int ocena)
+        || ocena < 1 || ocena > 5)
+    {
+        Console.WriteLine("Ocena mora biti od 1 do 5.");
+        return;
+    }
+
+    Console.Write("Komentar: ");
+    string komentar = Console.ReadLine() ?? "";
+
+    Kupovina nova = new()
+    {
+        BrojClanskeKarte = brojKarte,
+        ISBN = isbn,
+        DatumKupovine = datum,
+        Ocena = ocena,
+        Komentar = komentar
+    };
+
+    bool uspesno = kupovinaService.Add(nova);
+
+    Console.WriteLine(uspesno
+        ? "Kupovina je uspesno dodata."
+        : "Dodavanje kupovine nije uspelo.");
+}
+
+
+void PrikaziKupovine()
+{
+    List<Kupovina> kupovine = kupovinaService.GetAll();
+
+    if (kupovine.Count == 0)
+    {
+        Console.WriteLine("Nema kupovina.");
+        return;
+    }
+
+    Console.WriteLine("\n--- LISTA KUPOVINA ---");
+
+    for (int i = 0; i < kupovine.Count; i++)
+    {
+        Kupovina k = kupovine[i];
+
+        Console.WriteLine($"\nKupovina broj: {i + 1}");
+        Console.WriteLine($"Posetilac: {k.BrojClanskeKarte}");
+        Console.WriteLine($"ISBN: {k.ISBN}");
+        Console.WriteLine($"Datum: {k.DatumKupovine:dd.MM.yyyy}");
+        Console.WriteLine($"Ocena: {k.Ocena}");
+        Console.WriteLine($"Komentar: {k.Komentar}");
+    }
+}
+
+
+void IzmeniKupovinu()
+{
+    Console.WriteLine("\n--- IZMENA KUPOVINE ---");
+
+    List<Kupovina> kupovine = kupovinaService.GetAll();
+
+    if (kupovine.Count == 0)
+    {
+        Console.WriteLine("Nema kupovina.");
+        return;
+    }
+
+    PrikaziKupovine();
+
+    Console.Write("Unesi broj kupovine: ");
+
+    if (!int.TryParse(Console.ReadLine(), out int broj)
+        || broj < 1 || broj > kupovine.Count)
+    {
+        Console.WriteLine("Neispravan broj kupovine.");
+        return;
+    }
+
+    int index = broj - 1;
+    Kupovina postojeca = kupovine[index];
+
+    // Pravimo kopiju kako ne bismo menjali original
+    // dok korisnik ne zavrsi unos.
+    Kupovina izmenjena = new()
+    {
+        BrojClanskeKarte = postojeca.BrojClanskeKarte,
+        ISBN = postojeca.ISBN,
+        DatumKupovine = postojeca.DatumKupovine,
+        Ocena = postojeca.Ocena,
+        Komentar = postojeca.Komentar
+    };
+
+    Console.Write($"Broj clanske karte ({izmenjena.BrojClanskeKarte}): ");
+    string? karta = Console.ReadLine();
+    if (!string.IsNullOrWhiteSpace(karta))
+        izmenjena.BrojClanskeKarte = karta;
+
+    Console.Write($"ISBN ({izmenjena.ISBN}): ");
+    string? isbn = Console.ReadLine();
+    if (!string.IsNullOrWhiteSpace(isbn))
+        izmenjena.ISBN = isbn;
+
+    Console.Write($"Datum ({izmenjena.DatumKupovine:dd.MM.yyyy}): ");
+    string? datumUnos = Console.ReadLine();
+
+    if (!string.IsNullOrWhiteSpace(datumUnos))
+    {
+        if (!DateTime.TryParseExact(
+                datumUnos,
+                "dd.MM.yyyy",
+                System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None,
+                out DateTime datum))
+        {
+            Console.WriteLine("Neispravan datum.");
+            return;
+        }
+
+        izmenjena.DatumKupovine = datum;
+    }
+
+    Console.Write($"Ocena ({izmenjena.Ocena}): ");
+    string? ocenaUnos = Console.ReadLine();
+
+    if (!string.IsNullOrWhiteSpace(ocenaUnos))
+    {
+        if (!int.TryParse(ocenaUnos, out int ocena)
+            || ocena < 1 || ocena > 5)
+        {
+            Console.WriteLine("Ocena mora biti od 1 do 5.");
+            return;
+        }
+
+        izmenjena.Ocena = ocena;
+    }
+
+    Console.Write($"Komentar ({izmenjena.Komentar}): ");
+    string? komentar = Console.ReadLine();
+    if (!string.IsNullOrWhiteSpace(komentar))
+        izmenjena.Komentar = komentar;
+
+    bool uspesno = kupovinaService.Update(index, izmenjena);
+
+    Console.WriteLine(uspesno
+        ? "Kupovina je uspesno izmenjena."
+        : "Izmena nije uspela.");
+}
+
+
+void ObrisiKupovinu()
+{
+    Console.WriteLine("\n--- BRISANJE KUPOVINE ---");
+
+    List<Kupovina> kupovine = kupovinaService.GetAll();
+
+    if (kupovine.Count == 0)
+    {
+        Console.WriteLine("Nema kupovina.");
+        return;
+    }
+
+    PrikaziKupovine();
+
+    Console.Write("Unesi broj kupovine za brisanje: ");
+
+    if (!int.TryParse(Console.ReadLine(), out int broj)
+        || broj < 1 || broj > kupovine.Count)
+    {
+        Console.WriteLine("Neispravan broj kupovine.");
+        return;
+    }
+
+    int index = broj - 1;
+
+    Console.Write("Potvrdi brisanje (D/N): ");
+    string potvrda = (Console.ReadLine() ?? "")
+        .Trim().ToUpperInvariant();
+
+    if (potvrda != "D")
+    {
+        Console.WriteLine("Brisanje je otkazano.");
+        return;
+    }
+
+    bool uspesno = kupovinaService.Delete(index);
+
+    Console.WriteLine(uspesno
+        ? "Kupovina je uspesno obrisana."
+        : "Brisanje nije uspelo.");
+}
+
+
 
