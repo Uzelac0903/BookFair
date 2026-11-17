@@ -15,7 +15,10 @@ KupovinaService kupovinaService = new(kupovinaDAO);
 IzdavacDAO izdavacDAO = new(dataDirectory);
 IzdavacService izdavacService = new(izdavacDAO);
 
-
+AutorDAO autorDAO = new(dataDirectory);
+KnjigaDAO knjigaDAO = new(dataDirectory);
+AutorKnjigaDAO autorKnjigaDAO = new(dataDirectory);
+AutorService autorService = new(autorDAO, autorKnjigaDAO);
 
 while (true)
 {
@@ -37,7 +40,12 @@ while (true)
     Console.WriteLine("11. Obrisi izdavaca");
     Console.WriteLine("12. Prikazi izdavace");
 
-    
+    Console.WriteLine("\n--- AUTORI ---");
+    Console.WriteLine("13. Dodaj autora");
+    Console.WriteLine("14. Izmeni autora");
+    Console.WriteLine("15. Obrisi autora");
+    Console.WriteLine("16. Prikazi autore");
+
     Console.WriteLine("0. Izlaz");
 
     Console.Write("Izaberite opciju: ");
@@ -92,7 +100,22 @@ while (true)
         case "12":
             PrikaziIzdavace();
             break;
-        
+
+        case "13":
+            DodajAutora();
+            break;
+
+        case "14":
+            IzmeniAutora();
+            break;
+
+        case "15":
+            ObrisiAutora();
+            break;
+
+        case "16":
+            PrikaziAutore();
+            break;
         case "0":
             return;
         
@@ -693,6 +716,288 @@ void ObrisiIzdavaca()
     Console.WriteLine(uspesno
         ? "Izdavac je uspesno obrisan."
         : "Izdavac nije pronadjen.");
+}
+
+void DodajAutora()
+{
+    Console.WriteLine("\n--- DODAVANJE AUTORA ---");
+
+    Console.Write("Ime: ");
+    string ime = Console.ReadLine() ?? "";
+
+    Console.Write("Prezime: ");
+    string prezime = Console.ReadLine() ?? "";
+
+    Console.Write("Datum rodjenja (dd.MM.yyyy): ");
+    if (!DateTime.TryParseExact(
+            Console.ReadLine(),
+            "dd.MM.yyyy",
+            System.Globalization.CultureInfo.InvariantCulture,
+            System.Globalization.DateTimeStyles.None,
+            out DateTime datumRodjenja))
+    {
+        Console.WriteLine("Neispravan datum rodjenja.");
+        return;
+    }
+
+    Console.WriteLine("\n--- ADRESA ---");
+
+    Console.Write("Ulica: ");
+    string ulica = Console.ReadLine() ?? "";
+
+    Console.Write("Broj: ");
+    string broj = Console.ReadLine() ?? "";
+
+    Console.Write("Grad: ");
+    string grad = Console.ReadLine() ?? "";
+
+    Console.Write("Drzava: ");
+    string drzava = Console.ReadLine() ?? "";
+
+    Console.Write("\nTelefon: ");
+    string telefon = Console.ReadLine() ?? "";
+
+    Console.Write("Email: ");
+    string email = Console.ReadLine() ?? "";
+
+    Console.Write("Broj licne karte: ");
+    string brojLicneKarte = Console.ReadLine() ?? "";
+
+    Console.Write("Godine iskustva: ");
+    if (!int.TryParse(Console.ReadLine(), out int godineIskustva)
+        || godineIskustva < 0)
+    {
+        Console.WriteLine("Neispravne godine iskustva.");
+        return;
+    }
+
+    Autor novi = new()
+    {
+        Ime = ime,
+        Prezime = prezime,
+        DatumRodjenja = datumRodjenja,
+        Adresa = new Adresa
+        {
+            Ulica = ulica,
+            Broj = broj,
+            Grad = grad,
+            Drzava = drzava
+        },
+        Telefon = telefon,
+        Email = email,
+        BrojLicneKarte = brojLicneKarte,
+        GodineIskustva = godineIskustva
+    };
+
+    bool uspesno = autorService.Add(novi);
+
+    Console.WriteLine(uspesno
+        ? "Autor je uspesno dodat."
+        : "Dodavanje autora nije uspelo.");
+}
+
+void IzmeniAutora()
+{
+    Console.WriteLine("\n--- IZMENA AUTORA ---");
+
+    Console.Write("Broj licne karte autora: ");
+    string brojLicneKarte = Console.ReadLine() ?? "";
+
+    Autor? postojeci = autorService.GetAll()
+        .FirstOrDefault(a => a.BrojLicneKarte == brojLicneKarte);
+
+    if (postojeci == null)
+    {
+        Console.WriteLine("Autor nije pronadjen.");
+        return;
+    }
+
+    Console.WriteLine(
+        "Unesite nove podatke (Enter zadrzava staru vrednost).");
+
+    Console.Write($"Ime ({postojeci.Ime}): ");
+    string? ime = Console.ReadLine();
+
+    if (!string.IsNullOrWhiteSpace(ime))
+        postojeci.Ime = ime;
+
+    Console.Write($"Prezime ({postojeci.Prezime}): ");
+    string? prezime = Console.ReadLine();
+
+    if (!string.IsNullOrWhiteSpace(prezime))
+        postojeci.Prezime = prezime;
+
+    Console.Write(
+        $"Datum rodjenja ({postojeci.DatumRodjenja:dd.MM.yyyy}): ");
+    string? datumUnos = Console.ReadLine();
+
+    if (!string.IsNullOrWhiteSpace(datumUnos))
+    {
+        if (!DateTime.TryParseExact(
+                datumUnos,
+                "dd.MM.yyyy",
+                System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None,
+                out DateTime datum))
+        {
+            Console.WriteLine("Neispravan datum rodjenja.");
+            return;
+        }
+
+        postojeci.DatumRodjenja = datum;
+    }
+
+    Console.WriteLine("\n--- ADRESA ---");
+
+    Console.Write($"Ulica ({postojeci.Adresa.Ulica}): ");
+    string? ulica = Console.ReadLine();
+
+    if (!string.IsNullOrWhiteSpace(ulica))
+        postojeci.Adresa.Ulica = ulica;
+
+    Console.Write($"Broj ({postojeci.Adresa.Broj}): ");
+    string? broj = Console.ReadLine();
+
+    if (!string.IsNullOrWhiteSpace(broj))
+        postojeci.Adresa.Broj = broj;
+
+    Console.Write($"Grad ({postojeci.Adresa.Grad}): ");
+    string? grad = Console.ReadLine();
+
+    if (!string.IsNullOrWhiteSpace(grad))
+        postojeci.Adresa.Grad = grad;
+
+    Console.Write($"Drzava ({postojeci.Adresa.Drzava}): ");
+    string? drzava = Console.ReadLine();
+
+    if (!string.IsNullOrWhiteSpace(drzava))
+        postojeci.Adresa.Drzava = drzava;
+
+    Console.Write($"Telefon ({postojeci.Telefon}): ");
+    string? telefon = Console.ReadLine();
+
+    if (!string.IsNullOrWhiteSpace(telefon))
+        postojeci.Telefon = telefon;
+
+    Console.Write($"Email ({postojeci.Email}): ");
+    string? email = Console.ReadLine();
+
+    if (!string.IsNullOrWhiteSpace(email))
+        postojeci.Email = email;
+
+    Console.Write(
+        $"Godine iskustva ({postojeci.GodineIskustva}): ");
+    string? iskustvoUnos = Console.ReadLine();
+
+    if (!string.IsNullOrWhiteSpace(iskustvoUnos))
+    {
+        if (!int.TryParse(iskustvoUnos, out int iskustvo)
+            || iskustvo < 0)
+        {
+            Console.WriteLine("Neispravne godine iskustva.");
+            return;
+        }
+
+        postojeci.GodineIskustva = iskustvo;
+    }
+
+    bool uspesno = autorService.Update(postojeci);
+
+    Console.WriteLine(uspesno
+        ? "Autor je uspesno izmenjen."
+        : "Izmena autora nije uspela.");
+}
+
+void ObrisiAutora()
+{
+    Console.WriteLine("\n--- BRISANJE AUTORA ---");
+
+    Console.Write("Broj licne karte autora: ");
+    string brojLicneKarte = Console.ReadLine() ?? "";
+
+    Autor? postojeci = autorService.GetAll()
+        .FirstOrDefault(a => a.BrojLicneKarte == brojLicneKarte);
+
+    if (postojeci == null)
+    {
+        Console.WriteLine("Autor nije pronadjen.");
+        return;
+    }
+
+    Console.WriteLine(
+        $"Autor: {postojeci.Ime} {postojeci.Prezime}");
+
+    Console.Write("Potvrdi brisanje (D/N): ");
+    string potvrda = (Console.ReadLine() ?? "")
+        .Trim().ToUpperInvariant();
+
+    if (potvrda != "D")
+    {
+        Console.WriteLine("Brisanje je otkazano.");
+        return;
+    }
+
+    bool uspesno = autorService.Delete(brojLicneKarte);
+
+    Console.WriteLine(uspesno
+        ? "Autor je uspesno obrisan."
+        : "Brisanje autora nije uspelo.");
+}
+
+void PrikaziAutore()
+{
+    List<Autor> autori = autorService.GetAll();
+
+    if (autori.Count == 0)
+    {
+        Console.WriteLine("Nema autora.");
+        return;
+    }
+
+    List<Knjiga> knjige = knjigaDAO.Load();
+    List<AutorKnjiga> veze = autorKnjigaDAO.Load();
+
+    AutorKnjigaService autorKnjigaService = new();
+
+    autorKnjigaService.PoveziAutoreIKnjige(
+        autori, knjige, veze);
+
+    Console.WriteLine("\n--- LISTA AUTORA ---");
+
+    foreach (Autor autor in autori)
+    {
+        Console.WriteLine("-------------------------");
+        Console.WriteLine($"Ime: {autor.Ime}");
+        Console.WriteLine($"Prezime: {autor.Prezime}");
+        Console.WriteLine(
+            $"Datum rodjenja: {autor.DatumRodjenja:dd.MM.yyyy}");
+
+        Console.WriteLine(
+            $"Adresa: {autor.Adresa.Ulica} {autor.Adresa.Broj}, " +
+            $"{autor.Adresa.Grad}, {autor.Adresa.Drzava}");
+
+        Console.WriteLine($"Telefon: {autor.Telefon}");
+        Console.WriteLine($"Email: {autor.Email}");
+        Console.WriteLine(
+            $"Broj licne karte: {autor.BrojLicneKarte}");
+        Console.WriteLine(
+            $"Godine iskustva: {autor.GodineIskustva}");
+
+        Console.WriteLine("Knjige:");
+
+        if (autor.Knjige.Count == 0)
+        {
+            Console.WriteLine("  Nema knjiga.");
+        }
+        else
+        {
+            foreach (Knjiga knjiga in autor.Knjige)
+            {
+                Console.WriteLine(
+                    $"  - {knjiga.Naziv} (ISBN: {knjiga.ISBN})");
+            }
+        }
+    }
 }
 
 
