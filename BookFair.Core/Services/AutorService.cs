@@ -1,54 +1,103 @@
 ﻿
-using System;
+using BookFair.Core.DAO;
 using BookFair.Core.Models;
 
 namespace BookFair.Core.Services;
 
 public class AutorService
 {
-    public Autor DodajAutora()
+    private readonly AutorDAO _dao;
+    private readonly AutorKnjigaDAO _autorKnjigaDAO;
+    public AutorService(AutorDAO dao, AutorKnjigaDAO autorKnjigaDAO)
     {
-        Console.WriteLine("=== DODAVANJE AUTORA ===");
-
-        Autor autor = new Autor();
-
-        Console.Write("Ime: ");
-        autor.Ime = Console.ReadLine() ?? "";
-
-        Console.Write("Prezime: ");
-        autor.Prezime = Console.ReadLine() ?? "";
-
-        Console.Write("Datum rođenja: ");
-        autor.DatumRodjenja = DateTime.Parse(Console.ReadLine()!);
-
-        Console.WriteLine("--- ADRESA ---");
-
-        Console.Write("Ulica: ");
-        autor.Adresa.Ulica = Console.ReadLine() ?? "";
-
-        Console.Write("Broj: ");
-        autor.Adresa.Broj = Console.ReadLine() ?? "";
-
-        Console.Write("Grad: ");
-        autor.Adresa.Grad = Console.ReadLine() ?? "";
-
-        Console.Write("Država: ");
-        autor.Adresa.Drzava = Console.ReadLine() ?? "";
-
-        Console.Write("Telefon: ");
-        autor.Telefon = Console.ReadLine() ?? "";
-
-        Console.Write("Email: ");
-        autor.Email = Console.ReadLine() ?? "";
-
-        Console.Write("Broj lične karte: ");
-        autor.BrojLicneKarte = Console.ReadLine() ?? "";
-
-        Console.Write("Godine iskustva: ");
-        autor.GodineIskustva = int.Parse(Console.ReadLine()!);
-
-        Console.WriteLine("Autor je uspešno unet!");
-
-        return autor;
+        _dao = dao;
+        _autorKnjigaDAO = autorKnjigaDAO;
     }
+    // 8.4 - Prikaz svih autora
+    public List<Autor> GetAll()
+    {
+        return _dao.Load();
+    }
+
+    // 8.1 - Dodavanje autora
+    public bool Add(Autor autor)
+    {
+        if (autor == null ||
+            string.IsNullOrWhiteSpace(autor.Ime) ||
+            string.IsNullOrWhiteSpace(autor.Prezime) ||
+            string.IsNullOrWhiteSpace(autor.BrojLicneKarte) ||
+            autor.GodineIskustva < 0)
+        {
+            return false;
+        }
+
+        List<Autor> autori = _dao.Load();
+
+        if (autori.Any(a =>
+            a.BrojLicneKarte == autor.BrojLicneKarte))
+        {
+            return false;
+        }
+
+        autori.Add(autor);
+        _dao.Save(autori);
+
+        return true;
+    }
+
+    // 8.2 - Izmena autora
+    public bool Update(Autor izmenjeni)
+    {
+        if (izmenjeni == null ||
+            string.IsNullOrWhiteSpace(izmenjeni.Ime) ||
+            string.IsNullOrWhiteSpace(izmenjeni.Prezime) ||
+            string.IsNullOrWhiteSpace(izmenjeni.BrojLicneKarte) ||
+            izmenjeni.GodineIskustva < 0)
+        {
+            return false;
+        }
+
+        List<Autor> autori = _dao.Load();
+
+        int index = autori.FindIndex(a =>
+            a.BrojLicneKarte == izmenjeni.BrojLicneKarte);
+
+        if (index == -1)
+        {
+            return false;
+        }
+
+        autori[index] = izmenjeni;
+
+        _dao.Save(autori);
+
+        return true;
+    }
+
+    // 8.3 - Brisanje autora
+    public bool Delete(string brojLicneKarte)
+    {
+        List<Autor> autori = _dao.Load();
+
+        Autor? autor = autori.FirstOrDefault(a =>
+            a.BrojLicneKarte == brojLicneKarte);
+
+        if (autor == null)
+        {
+            return false;
+        }
+
+        List<AutorKnjiga> veze = _autorKnjigaDAO.Load();
+
+        veze.RemoveAll(v =>
+            v.BrojLicneKarte == brojLicneKarte);
+
+        autori.Remove(autor);
+
+        _autorKnjigaDAO.Save(veze);
+        _dao.Save(autori);
+
+        return true;
+    }
+
 }
