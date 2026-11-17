@@ -19,6 +19,7 @@ AutorDAO autorDAO = new(dataDirectory);
 KnjigaDAO knjigaDAO = new(dataDirectory);
 AutorKnjigaDAO autorKnjigaDAO = new(dataDirectory);
 AutorService autorService = new(autorDAO, autorKnjigaDAO);
+KnjigaService knjigaService = new(knjigaDAO, autorKnjigaDAO);
 
 while (true)
 {
@@ -45,6 +46,10 @@ while (true)
     Console.WriteLine("14. Izmeni autora");
     Console.WriteLine("15. Obrisi autora");
     Console.WriteLine("16. Prikazi autore");
+
+    Console.WriteLine("\n--- KNJIGE ---");
+    Console.WriteLine("17. Prikazi knjige");
+    Console.WriteLine("18. Obrisi knjigu");
 
     Console.WriteLine("0. Izlaz");
 
@@ -116,6 +121,15 @@ while (true)
         case "16":
             PrikaziAutore();
             break;
+
+        case "17":
+            PrikaziKnjige();
+            break;
+
+        case "18":
+            ObrisiKnjigu();
+            break;
+
         case "0":
             return;
         
@@ -998,6 +1012,95 @@ void PrikaziAutore()
             }
         }
     }
+}
+
+void PrikaziKnjige()
+{
+    List<Knjiga> knjige = knjigaService.GetAll();
+
+    if (knjige.Count == 0)
+    {
+        Console.WriteLine("Nema knjiga.");
+        return;
+    }
+
+    List<Autor> autori = autorService.GetAll();
+    List<AutorKnjiga> veze = autorKnjigaDAO.Load();
+
+    AutorKnjigaService autorKnjigaService = new();
+
+    autorKnjigaService.PoveziAutoreIKnjige(
+        autori, knjige, veze);
+
+    Console.WriteLine("\n--- LISTA KNJIGA ---");
+
+    foreach (Knjiga knjiga in knjige)
+    {
+        Console.WriteLine("-------------------------");
+        Console.WriteLine($"ISBN: {knjiga.ISBN}");
+        Console.WriteLine($"Naziv: {knjiga.Naziv}");
+        Console.WriteLine($"Zanr: {knjiga.Zanr}");
+        Console.WriteLine($"Godina izdanja: {knjiga.GodinaIzdanja}");
+        Console.WriteLine($"Cena: {knjiga.Cena:F2}");
+        Console.WriteLine($"Broj strana: {knjiga.BrojStrana}");
+
+        Console.WriteLine(
+            $"Sifra izdavaca: {knjiga.IzdavacSifra ?? "Nije dodeljen"}");
+
+        Console.WriteLine("Autori:");
+
+        if (knjiga.Autori.Count == 0)
+        {
+            Console.WriteLine("  Nema autora.");
+        }
+        else
+        {
+            foreach (Autor autor in knjiga.Autori)
+            {
+                Console.WriteLine(
+                    $"  - {autor.Ime} {autor.Prezime}");
+            }
+        }
+
+        Console.WriteLine($"Broj kupaca: {knjiga.Kupci.Count}");
+        Console.WriteLine(
+            $"Broj posetilaca na listi zelja: {knjiga.ListaZelja.Count}");
+    }
+}
+
+void ObrisiKnjigu()
+{
+    Console.WriteLine("\n--- BRISANJE KNJIGE ---");
+
+    Console.Write("ISBN knjige: ");
+    string isbn = Console.ReadLine() ?? "";
+
+    Knjiga? postojeca = knjigaService.GetAll()
+        .FirstOrDefault(k => k.ISBN == isbn);
+
+    if (postojeca == null)
+    {
+        Console.WriteLine("Knjiga nije pronadjena.");
+        return;
+    }
+
+    Console.WriteLine($"Knjiga: {postojeca.Naziv}");
+
+    Console.Write("Potvrdi brisanje (D/N): ");
+    string potvrda = (Console.ReadLine() ?? "")
+        .Trim().ToUpperInvariant();
+
+    if (potvrda != "D")
+    {
+        Console.WriteLine("Brisanje je otkazano.");
+        return;
+    }
+
+    bool uspesno = knjigaService.Delete(isbn);
+
+    Console.WriteLine(uspesno
+        ? "Knjiga je uspesno obrisana."
+        : "Brisanje knjige nije uspelo.");
 }
 
 
