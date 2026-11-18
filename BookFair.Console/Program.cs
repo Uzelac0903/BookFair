@@ -50,6 +50,8 @@ while (true)
     Console.WriteLine("\n--- KNJIGE ---");
     Console.WriteLine("17. Prikazi knjige");
     Console.WriteLine("18. Obrisi knjigu");
+    Console.WriteLine("19. Dodaj knjigu");
+    Console.WriteLine("20. Izmeni knjigu");
 
     Console.WriteLine("0. Izlaz");
 
@@ -128,6 +130,14 @@ while (true)
 
         case "18":
             ObrisiKnjigu();
+            break;
+        
+        case "19":
+            DodajKnjigu();
+            break;
+
+        case "20":
+            IzmeniKnjigu();
             break;
 
         case "0":
@@ -1102,6 +1112,199 @@ void ObrisiKnjigu()
         ? "Knjiga je uspesno obrisana."
         : "Brisanje knjige nije uspelo.");
 }
+
+
+void DodajKnjigu()
+{
+    Console.WriteLine("\n--- DODAVANJE KNJIGE ---");
+
+    Console.Write("ISBN: ");
+    string isbn = (Console.ReadLine() ?? "").Trim();
+
+    Console.Write("Naziv: ");
+    string naziv = Console.ReadLine() ?? "";
+
+    Console.Write("Zanr: ");
+    string zanr = Console.ReadLine() ?? "";
+
+    Console.Write("Godina izdanja: ");
+    if (!int.TryParse(Console.ReadLine(), out int godina) ||
+        godina <= 0)
+    {
+        Console.WriteLine("Neispravna godina izdanja.");
+        return;
+    }
+
+    Console.Write("Cena: ");
+    if (!decimal.TryParse(
+            Console.ReadLine(),
+            System.Globalization.NumberStyles.Number,
+            System.Globalization.CultureInfo.CurrentCulture,
+            out decimal cena) || cena < 0)
+    {
+        Console.WriteLine("Neispravna cena.");
+        return;
+    }
+
+    Console.Write("Broj strana: ");
+    if (!int.TryParse(Console.ReadLine(), out int brojStrana) ||
+        brojStrana <= 0)
+    {
+        Console.WriteLine("Neispravan broj strana.");
+        return;
+    }
+
+    Console.Write("Sifra izdavaca (Enter ako nema): ");
+    string sifra = (Console.ReadLine() ?? "").Trim();
+
+    if (!string.IsNullOrEmpty(sifra) &&
+        !izdavacService.GetAll().Any(i => i.Sifra == sifra))
+    {
+        Console.WriteLine("Izdavac sa tom sifrom ne postoji.");
+        return;
+    }
+
+    Knjiga nova = new()
+    {
+        ISBN = isbn,
+        Naziv = naziv,
+        Zanr = zanr,
+        GodinaIzdanja = godina,
+        Cena = cena,
+        BrojStrana = brojStrana,
+        IzdavacSifra = string.IsNullOrEmpty(sifra) ? null : sifra
+    };
+
+    bool uspesno = knjigaService.Add(nova);
+
+    Console.WriteLine(uspesno
+        ? "Knjiga je uspesno dodata."
+        : "Dodavanje knjige nije uspelo.");
+}
+
+
+void IzmeniKnjigu()
+{
+    Console.WriteLine("\n--- IZMENA KNJIGE ---");
+
+    Console.Write("ISBN knjige: ");
+    string isbn = (Console.ReadLine() ?? "").Trim();
+
+    Knjiga? postojeca = knjigaService.GetAll()
+        .FirstOrDefault(k => k.ISBN == isbn);
+
+    if (postojeca == null)
+    {
+        Console.WriteLine("Knjiga nije pronadjena.");
+        return;
+    }
+
+    Knjiga izmenjena = new()
+    {
+        ISBN = postojeca.ISBN,
+        Naziv = postojeca.Naziv,
+        Zanr = postojeca.Zanr,
+        GodinaIzdanja = postojeca.GodinaIzdanja,
+        Cena = postojeca.Cena,
+        BrojStrana = postojeca.BrojStrana,
+        IzdavacSifra = postojeca.IzdavacSifra
+    };
+
+    Console.WriteLine(
+        "Unesite nove podatke (Enter zadrzava staru vrednost).");
+
+    Console.Write($"Naziv ({izmenjena.Naziv}): ");
+    string? naziv = Console.ReadLine();
+
+    if (!string.IsNullOrWhiteSpace(naziv))
+        izmenjena.Naziv = naziv;
+
+    Console.Write($"Zanr ({izmenjena.Zanr}): ");
+    string? zanr = Console.ReadLine();
+
+    if (!string.IsNullOrWhiteSpace(zanr))
+        izmenjena.Zanr = zanr;
+
+    Console.Write($"Godina izdanja ({izmenjena.GodinaIzdanja}): ");
+    string? godinaUnos = Console.ReadLine();
+
+    if (!string.IsNullOrWhiteSpace(godinaUnos))
+    {
+        if (!int.TryParse(godinaUnos, out int godina) ||
+            godina <= 0)
+        {
+            Console.WriteLine("Neispravna godina izdanja.");
+            return;
+        }
+
+        izmenjena.GodinaIzdanja = godina;
+    }
+
+    Console.Write($"Cena ({izmenjena.Cena:F2}): ");
+    string? cenaUnos = Console.ReadLine();
+
+    if (!string.IsNullOrWhiteSpace(cenaUnos))
+    {
+        if (!decimal.TryParse(
+                cenaUnos,
+                System.Globalization.NumberStyles.Number,
+                System.Globalization.CultureInfo.CurrentCulture,
+                out decimal cena) || cena < 0)
+        {
+            Console.WriteLine("Neispravna cena.");
+            return;
+        }
+
+        izmenjena.Cena = cena;
+    }
+
+    Console.Write($"Broj strana ({izmenjena.BrojStrana}): ");
+    string? straneUnos = Console.ReadLine();
+
+    if (!string.IsNullOrWhiteSpace(straneUnos))
+    {
+        if (!int.TryParse(straneUnos, out int strane) ||
+            strane <= 0)
+        {
+            Console.WriteLine("Neispravan broj strana.");
+            return;
+        }
+
+        izmenjena.BrojStrana = strane;
+    }
+
+    Console.Write(
+        $"Sifra izdavaca ({izmenjena.IzdavacSifra ?? "Nema"}): ");
+    string? sifra = Console.ReadLine();
+
+    if (!string.IsNullOrWhiteSpace(sifra))
+    {
+        sifra = sifra.Trim();
+
+        if (sifra == "-")
+        {
+            izmenjena.IzdavacSifra = null;
+        }
+        else
+        {
+            if (!izdavacService.GetAll()
+                    .Any(i => i.Sifra == sifra))
+            {
+                Console.WriteLine("Izdavac ne postoji.");
+                return;
+            }
+
+            izmenjena.IzdavacSifra = sifra;
+        }
+    }
+
+    bool uspesno = knjigaService.Update(izmenjena);
+
+    Console.WriteLine(uspesno
+        ? "Knjiga je uspesno izmenjena."
+        : "Izmena knjige nije uspela.");
+}
+
 
 
 
