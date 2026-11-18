@@ -1031,7 +1031,13 @@ void PrikaziKnjige()
 
     autorKnjigaService.PoveziAutoreIKnjige(
         autori, knjige, veze);
+    List<Izdavac> izdavaci = izdavacService.GetAll();
 
+    KnjigaIzdavacService knjigaIzdavacService = new();
+
+    knjigaIzdavacService.PoveziKnjigeIIzdavace(
+        knjige,
+        izdavaci);
     Console.WriteLine("\n--- LISTA KNJIGA ---");
 
     foreach (Knjiga knjiga in knjige)
@@ -1045,7 +1051,10 @@ void PrikaziKnjige()
         Console.WriteLine($"Broj strana: {knjiga.BrojStrana}");
 
         Console.WriteLine(
-            $"Sifra izdavaca: {knjiga.IzdavacSifra ?? "Nije dodeljen"}");
+        $"Sifra izdavaca: {knjiga.IzdavacSifra ?? "Nije dodeljen"}");
+
+        Console.WriteLine(
+            $"Naziv izdavaca: {knjiga.Izdavac?.Naziv ?? "Nije povezan"}");
 
         Console.WriteLine("Autori:");
 
