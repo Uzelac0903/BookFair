@@ -21,6 +21,9 @@ AutorKnjigaDAO autorKnjigaDAO = new(dataDirectory);
 AutorService autorService = new(autorDAO, autorKnjigaDAO);
 KnjigaService knjigaService = new(knjigaDAO, autorKnjigaDAO);
 
+AdresaDAO adresaDAO = new(dataDirectory);
+AdresaService adresaService = new(adresaDAO);
+
 while (true)
 {
     Console.WriteLine("\n========== BOOKFAIR ==========");
@@ -52,6 +55,13 @@ while (true)
     Console.WriteLine("18. Obrisi knjigu");
     Console.WriteLine("19. Dodaj knjigu");
     Console.WriteLine("20. Izmeni knjigu");
+
+
+    Console.WriteLine("\n--- ADRESA ---");
+    Console.WriteLine("21. Dodaj adresu");
+    Console.WriteLine("22. Izmeni adresu");
+    Console.WriteLine("23. Obrisi adresu");
+    Console.WriteLine("24. Prikazi adresu");
 
     Console.WriteLine("0. Izlaz");
 
@@ -140,6 +150,21 @@ while (true)
             IzmeniKnjigu();
             break;
 
+        case "21":
+            DodajAdresu();
+            break;
+
+        case "22":
+            IzmeniAdresu();
+            break;
+
+        case "23":
+            ObrisiAdresu();
+            break;
+
+        case "24":
+            PrikaziAdrese();
+            break;
         case "0":
             return;
         
@@ -1312,6 +1337,167 @@ void IzmeniKnjigu()
     Console.WriteLine(uspesno
         ? "Knjiga je uspesno izmenjena."
         : "Izmena knjige nije uspela.");
+}
+
+void DodajAdresu()
+{
+    Console.WriteLine("\n--- DODAVANJE ADRESE ---");
+
+    Console.Write("ID adrese: ");
+
+    if (!int.TryParse(Console.ReadLine(), out int id) || id <= 0)
+    {
+        Console.WriteLine("Neispravan ID.");
+        return;
+    }
+
+    Adresa adresa = new Adresa();
+    adresa.Id = id;
+
+    Console.Write("Ulica: ");
+    adresa.Ulica = Console.ReadLine() ?? "";
+
+    Console.Write("Broj: ");
+    adresa.Broj = Console.ReadLine() ?? "";
+
+    Console.Write("Grad: ");
+    adresa.Grad = Console.ReadLine() ?? "";
+
+    Console.Write("Drzava: ");
+    adresa.Drzava = Console.ReadLine() ?? "";
+
+    if (adresaService.Add(adresa))
+    {
+        Console.WriteLine("Adresa je uspesno dodata.");
+    }
+    else
+    {
+        Console.WriteLine("Dodavanje nije uspelo. Proveri podatke i ID.");
+    }
+}
+
+void IzmeniAdresu()
+{
+    Console.WriteLine("\n--- IZMENA ADRESE ---");
+
+    Console.Write("ID adrese: ");
+
+    if (!int.TryParse(Console.ReadLine(), out int id))
+    {
+        Console.WriteLine("Neispravan ID.");
+        return;
+    }
+
+    Adresa? adresa = adresaService.GetAll()
+        .FirstOrDefault(a => a.Id == id);
+
+    if (adresa == null)
+    {
+        Console.WriteLine("Adresa nije pronadjena.");
+        return;
+    }
+
+    Console.WriteLine("Pritisni Enter da zadrzis postojecu vrednost.");
+
+    Console.Write($"Ulica ({adresa.Ulica}): ");
+    string? ulica = Console.ReadLine();
+
+    if (!string.IsNullOrWhiteSpace(ulica))
+        adresa.Ulica = ulica;
+
+    Console.Write($"Broj ({adresa.Broj}): ");
+    string? broj = Console.ReadLine();
+
+    if (!string.IsNullOrWhiteSpace(broj))
+        adresa.Broj = broj;
+
+    Console.Write($"Grad ({adresa.Grad}): ");
+    string? grad = Console.ReadLine();
+
+    if (!string.IsNullOrWhiteSpace(grad))
+        adresa.Grad = grad;
+
+    Console.Write($"Drzava ({adresa.Drzava}): ");
+    string? drzava = Console.ReadLine();
+
+    if (!string.IsNullOrWhiteSpace(drzava))
+        adresa.Drzava = drzava;
+
+    if (adresaService.Update(adresa))
+    {
+        Console.WriteLine("Adresa je uspesno izmenjena.");
+    }
+    else
+    {
+        Console.WriteLine("Izmena adrese nije uspela.");
+    }
+}
+
+void ObrisiAdresu()
+{
+    Console.WriteLine("\n--- BRISANJE ADRESE ---");
+
+    Console.Write("ID adrese: ");
+
+    if (!int.TryParse(Console.ReadLine(), out int id))
+    {
+        Console.WriteLine("Neispravan ID.");
+        return;
+    }
+
+    Adresa? adresa = adresaService.GetAll()
+        .FirstOrDefault(a => a.Id == id);
+
+    if (adresa == null)
+    {
+        Console.WriteLine("Adresa nije pronadjena.");
+        return;
+    }
+
+    Console.WriteLine(
+        $"Adresa: {adresa.Ulica} {adresa.Broj}, {adresa.Grad}, {adresa.Drzava}");
+
+    Console.Write("Da li sigurno zelis da obrises adresu? (D/N): ");
+
+    string? potvrda = Console.ReadLine();
+
+    if (potvrda?.Trim().ToUpper() != "D")
+    {
+        Console.WriteLine("Brisanje je otkazano.");
+        return;
+    }
+
+    if (adresaService.Delete(id))
+    {
+        Console.WriteLine("Adresa je uspesno obrisana.");
+    }
+    else
+    {
+        Console.WriteLine("Brisanje adrese nije uspelo.");
+    }
+}
+
+void PrikaziAdrese()
+{
+    Console.WriteLine("\n--- LISTA ADRESA ---");
+
+    List<Adresa> adrese = adresaService.GetAll();
+
+    if (adrese.Count == 0)
+    {
+        Console.WriteLine("Nema unetih adresa.");
+        return;
+    }
+
+    foreach (Adresa adresa in adrese)
+    {
+        Console.WriteLine("-------------------------");
+        Console.WriteLine($"ID: {adresa.Id}");
+        Console.WriteLine($"Ulica: {adresa.Ulica}");
+        Console.WriteLine($"Broj: {adresa.Broj}");
+        Console.WriteLine($"Grad: {adresa.Grad}");
+        Console.WriteLine($"Drzava: {adresa.Drzava}");
+    }
 }
 
 
