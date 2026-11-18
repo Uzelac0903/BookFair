@@ -1,22 +1,17 @@
-using System.Text.Json;
 using BookFair.Core.Models;
+using BookFair.Core.Serialization;
 
 namespace BookFair.Core.DAO;
 
 public class KupovinaDAO
 {
     private readonly string _filePath;
-
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        WriteIndented = true
-    };
+    private readonly Serializer<Kupovina> _serializer = new();
 
     public KupovinaDAO(string dataDirectory)
     {
-        _filePath = dataDirectory
-                    + Path.DirectorySeparatorChar
-                    + "kupovine.json";
+        Directory.CreateDirectory(dataDirectory);
+        _filePath = Path.Combine(dataDirectory, "kupovine.csv");
     }
 
     public List<Kupovina> Load()
@@ -24,21 +19,16 @@ public class KupovinaDAO
         if (!File.Exists(_filePath))
             return new List<Kupovina>();
 
-        string json = File.ReadAllText(_filePath);
+        string[] lines = File.ReadAllLines(_filePath);
 
-        return JsonSerializer.Deserialize<List<Kupovina>>(json)
-               ?? new List<Kupovina>();
+        return _serializer.FromCSV(
+            lines.Where(line => !string.IsNullOrWhiteSpace(line))
+        );
     }
 
     public void Save(List<Kupovina> kupovine)
     {
-        string? directory = Path.GetDirectoryName(_filePath);
-
-        if (directory != null)
-            Directory.CreateDirectory(directory);
-
-        string json = JsonSerializer.Serialize(kupovine, JsonOptions);
-
-        File.WriteAllText(_filePath, json);
+        string csv = _serializer.ToCSV(kupovine);
+        File.WriteAllText(_filePath, csv);
     }
 }

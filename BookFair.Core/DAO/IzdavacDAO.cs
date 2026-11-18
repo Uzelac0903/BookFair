@@ -1,48 +1,34 @@
-using System.Text.Json;
 using BookFair.Core.Models;
+using BookFair.Core.Serialization;
 
 namespace BookFair.Core.DAO;
 
 public class IzdavacDAO
 {
     private readonly string _filePath;
-
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        WriteIndented = true
-    };
+    private readonly Serializer<Izdavac> _serializer = new();
 
     public IzdavacDAO(string dataDirectory)
     {
-        _filePath = dataDirectory
-                    + Path.DirectorySeparatorChar
-                    + "izdavaci.json";
+        Directory.CreateDirectory(dataDirectory);
+        _filePath = Path.Combine(dataDirectory, "izdavaci.csv");
     }
 
     public List<Izdavac> Load()
     {
         if (!File.Exists(_filePath))
-        {
             return new List<Izdavac>();
-        }
 
-        string json = File.ReadAllText(_filePath);
+        string[] lines = File.ReadAllLines(_filePath);
 
-        return JsonSerializer.Deserialize<List<Izdavac>>(json)
-               ?? new List<Izdavac>();
+        return _serializer.FromCSV(
+            lines.Where(line => !string.IsNullOrWhiteSpace(line))
+        );
     }
 
     public void Save(List<Izdavac> izdavaci)
     {
-        string? directory = Path.GetDirectoryName(_filePath);
-
-        if (directory != null)
-        {
-            Directory.CreateDirectory(directory);
-        }
-
-        string json = JsonSerializer.Serialize(izdavaci, JsonOptions);
-
-        File.WriteAllText(_filePath, json);
+        string csv = _serializer.ToCSV(izdavaci);
+        File.WriteAllText(_filePath, csv);
     }
 }
